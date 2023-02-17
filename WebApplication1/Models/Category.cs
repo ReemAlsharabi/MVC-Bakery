@@ -10,6 +10,6 @@ namespace WebApplication1.Models
         [Required]
         public string Name { get; set; }
         public string Description { get; set; }
-        public virtual ICollection<Product> Products { get; set; } // products listed under this category
+        // public virtual ICollection<Product> Products { get; set; } // products listed under this category
     }
 }
