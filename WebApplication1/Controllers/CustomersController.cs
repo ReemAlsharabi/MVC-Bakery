@@ -1,60 +1,109 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Data.Entity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using System.Data.Entity;
 using WebApplication1.Data;
 using WebApplication1.Models;
+using WebApplication1.Sessions;
+using System.Data.Entity.Infrastructure;
 
 namespace WebApplication1.Controllers
 {
     public class CustomersController : Controller
     {
         private readonly ApplicationDbContext _context;
-
-        public CustomersController(ApplicationDbContext context)
+        private readonly ICustomerService _customerService;
+        public CustomersController(ApplicationDbContext context, ICustomerService customerService)
         {
             _context = context;
+            _customerService = customerService;
         }
-
         // GET: Customers
         public async Task<IActionResult> Index()
         {
-              return View(await _context.Customer.ToListAsync());
+            if (!Loggedin())
+                return RedirectToAction("Index", "Home");
+            /*
+            if (GetCustomerProfile().IsAdmin)
+            {
+                var customers = await _context.Customer.AsQueryable().ToListAsync();
+                return View(customers);
+            }
+            */
+            // Redirect the customer to their own profile details
+            int? customerId = GetCustomerProfile().Id;
+            if (customerId == null)
+                return RedirectToAction("Index", "Home");
+            return RedirectToAction("Details", "Customers", new { id = customerId });
         }
 
-        // GET: Customers/Details/5
-        public async Task<IActionResult> Details(int? id)
+        [HttpGet]
+        public IActionResult Login()
         {
+            return View();
+        }
+        [HttpPost]
+        public IActionResult Login(string email, string password)
+        {
+            var customer = _customerService.Login(email, password);
+            if (customer != null)
+            {
+                // Login successful
+                HttpContext.Session.SetString("email", email);
+                return RedirectToAction("Welcome", "Customers");
+            }
+            else
+            {
+                // Login failed
+                ModelState.AddModelError("", "Invalid email or password");
+                ViewBag.Message = "Invalid Login";
+                return View();
+            }
+        }
+        public IActionResult Welcome()
+        {
+            if (Loggedin())
+            {
+                ViewBag.Message = GetCustomerProfile().Name;
+                return View();
+            }
+            return RedirectToAction("Index", "Home");
+
+        }
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Remove("email");
+            return RedirectToAction("Index", "Home");
+        }
+        // GET: Customers/Details/5
+        public IActionResult Details(int? id)
+        {
+            if (!Loggedin())
+                return RedirectToAction("Index", "Home");
+
             if (id == null || _context.Customer == null)
             {
                 return NotFound();
             }
 
-            var customer = await _context.Customer
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var customer = _context.Customer
+                .FirstOrDefault(m => m.Id == id);
             if (customer == null)
             {
                 return NotFound();
             }
-
             return View(customer);
         }
-
         // GET: Customers/Create
         public IActionResult Create()
         {
             return View();
         }
-
         // POST: Customers/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Email,Password,Address,PhoneNumber,IsAdmin")] Customer customer)
+        public async Task<IActionResult> Create([Bind("Id,Name,Email,Password,Address,PhoneNumber")] Customer customer)
         {
             if (ModelState.IsValid)
             {
@@ -64,10 +113,11 @@ namespace WebApplication1.Controllers
             }
             return View(customer);
         }
-
         // GET: Customers/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
+            if (!Loggedin())
+                return RedirectToAction("Index", "Home");
             if (id == null || _context.Customer == null)
             {
                 return NotFound();
@@ -80,14 +130,15 @@ namespace WebApplication1.Controllers
             }
             return View(customer);
         }
-
         // POST: Customers/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Email,Password,Address,PhoneNumber,IsAdmin")] Customer customer)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Email,Password,Address,PhoneNumber")] Customer customer)
         {
+            if (!Loggedin())
+                return RedirectToAction("Index", "Home");
             if (id != customer.Id)
             {
                 return NotFound();
@@ -115,10 +166,11 @@ namespace WebApplication1.Controllers
             }
             return View(customer);
         }
-
         // GET: Customers/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
+            if (!Loggedin())
+                return RedirectToAction("Index", "Home");
             if (id == null || _context.Customer == null)
             {
                 return NotFound();
@@ -133,7 +185,6 @@ namespace WebApplication1.Controllers
 
             return View(customer);
         }
-
         // POST: Customers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -152,11 +203,31 @@ namespace WebApplication1.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-
+        public bool Loggedin()
+        {
+            string email = HttpContext.Session.GetString("email");
+            if (email != null)
+                return true;
+            return false;
+        }
+        public Customer GetCustomerProfile()
+        {
+            // Retrieve the user's profile data from the database
+            if (!Loggedin())
+                return null;
+            Customer customer = _context.Customer.FirstOrDefault(c => c.Email == HttpContext.Session.GetString("email"));
+            Customer customerProfile = new Customer
+            {
+                Name = customer.Name,
+                Id = customer.Id,
+                Address = customer.Address,
+                IsAdmin = customer.IsAdmin
+            };
+            return customerProfile;
+        }
         private bool CustomerExists(int id)
         {
           return _context.Customer.Any(e => e.Id == id);
         }
-
     }
 }

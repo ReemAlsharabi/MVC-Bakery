@@ -35,7 +35,8 @@ namespace WebApplication1.Models
         public string Password { get; set; }
         public string Address { get; set; }
         public string PhoneNumber { get; set; }
-        public bool IsAdmin { get; set; }
-        public List<Order> Orders { get; set; }
+        // create the admin account before initializing IsAdmin to false
+        public bool IsAdmin { get; set; } = false;
+        public List<Order> Orders { get; set; } = new List<Order>();
     }
 }

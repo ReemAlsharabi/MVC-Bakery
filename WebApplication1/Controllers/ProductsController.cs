@@ -41,10 +41,10 @@ namespace WebApplication1.Controllers
                     Id = prod.Id,
                     Name = prod.Name,
                     CategoryName = categoryName,
-                    Description =  prod.Description,
-                    Image = prod.Image, 
-                    ImageURL = prod.ImageURL, 
-                    Available = prod.Available, 
+                    Description = prod.Description,
+                    Image = prod.Image,
+                    ImageURL = prod.ImageURL,
+                    Available = prod.Available,
                     CategoryId = prod.CategoryId,
                     Price = prod.Price
                 };
@@ -220,7 +220,7 @@ namespace WebApplication1.Controllers
 
         private bool ProductExists(int id)
         {
-          return _context.Product.Any(e => e.Id == id);
+            return _context.Product.Any(e => e.Id == id);
         }
         public void GetCategoryName()
         {

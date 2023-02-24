@@ -1,9 +1,10 @@
-﻿@{
+﻿@model WebApplication1.Models.Customer
+@{
     ViewData["Title"] = "Home Page";
 }
 
 <div class="text-center">
-    <br /><br />
+    <br /><br/>
     <h2>
         Welcome to Our Bakery
     </h2>
@@ -17,5 +18,9 @@
         So why wait? Order now and treat yourself to one of our delicious baked goods : p
     </p>
     <img src="images/cake.png" alt="recipe" width="300" height="200">
+    <br /><br />
 
+        <div>
+            <a asp-controller="Customers" asp-action="Create">Sign up</a> or <a asp-controller = "Customers" asp-action = "Login" > Log in</a>
+        </div>
 </div>
