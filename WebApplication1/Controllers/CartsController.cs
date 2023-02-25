@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -157,5 +159,52 @@ namespace WebApplication1.Controllers
         {
           return _context.Cart.Any(e => e.Id == id);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddToCart(int productId, int quantity)
+        {
+            // Get the current user's ID
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Get the current user's cart
+            var cart = await _context.Cart.FirstOrDefaultAsync(c => c.CustomerId == userId);
+
+            // If the user doesn't have a cart, create one
+            if (cart == null)
+            {
+                cart = new Cart
+                {
+                    CustomerId = userId,
+                    Quantity = quantity,
+                    ProductId = productId
+                };
+                _context.Carts.Add(cart);
+            }
+            else // If the user already has a cart, update the quantity of the existing item or add a new item to the cart
+            {
+                var cartItem = await _context.CartItems.FirstOrDefaultAsync(ci => ci.ProductId == productId && ci.CartId == cart.Id);
+                if (cartItem == null)
+                {
+                    cartItem = new CartItem
+                    {
+                        CartId = cart.Id,
+                        ProductId = productId,
+                        Quantity = quantity
+                    };
+                    _context.CartItems.Add(cartItem);
+                }
+                else
+                {
+                    cartItem.Quantity += quantity;
+                    _context.CartItems.Update(cartItem);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index", "Cart");
+        }
+
     }
 }

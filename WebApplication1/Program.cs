@@ -1,7 +1,11 @@
-/*using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
+/*
+using FluentAssertions.Common;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Configuration;
 using WebApplication1.Data;
+using WebApplication1.Models;
 using WebApplication1.Sessions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,20 +20,11 @@ builder.Services.AddScoped<ICustomerService, CustomerService>();
 
 // Add authentication middleware
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-        .AddCookie(options =>
-        {
+    .AddCookie(options =>
+    {
         options.LoginPath = "/Customers/Login";
         options.LogoutPath = "/Customers/Logout";
     });
-
-// Define an authorization policy
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminPolicy", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasClaim(c =>
-                c.Type == "IsAdmin" && c.Value == "true")));
-});
 
 var app = builder.Build();
 
@@ -53,15 +48,11 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.MapRazorPages();
-
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-
-
 */
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
