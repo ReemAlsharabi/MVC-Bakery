@@ -1,2 +1,2 @@
 # Bakery Repo
-//TODO: Admin/User views && Shopping Cart && Payment
+//TODO: Shopping Cart && Payment
