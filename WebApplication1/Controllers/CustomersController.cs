@@ -1,10 +1,10 @@
 ﻿using System.Data.Entity;
 using Microsoft.AspNetCore.Mvc;
-using System.Data.Entity;
 using WebApplication1.Data;
 using WebApplication1.Models;
 using WebApplication1.Sessions;
 using System.Data.Entity.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApplication1.Controllers
 {
@@ -18,19 +18,10 @@ namespace WebApplication1.Controllers
             _customerService = customerService;
         }
         // GET: Customers
+        //[Authorize]
         public async Task<IActionResult> Index()
         {
-            if (!Loggedin())
-                return RedirectToAction("Index", "Home");
-            /*
-            if (GetCustomerProfile().IsAdmin)
-            {
-                var customers = await _context.Customer.AsQueryable().ToListAsync();
-                return View(customers);
-            }
-            */
-            // Redirect the customer to their own profile details
-            int? customerId = GetCustomerProfile().Id;
+            int? customerId = GetCustomerProfile().Id;            
             if (customerId == null)
                 return RedirectToAction("Index", "Home");
             return RedirectToAction("Details", "Customers", new { id = customerId });
@@ -59,27 +50,23 @@ namespace WebApplication1.Controllers
                 return View();
             }
         }
+        
+        //[Authorize]
         public IActionResult Welcome()
         {
-            if (Loggedin())
-            {
-                ViewBag.Message = GetCustomerProfile().Name;
-                return View();
-            }
-            return RedirectToAction("Index", "Home");
-
+            ViewBag.Message = GetCustomerProfile().Name;
+            return View();
         }
+        //[Authorize]
         public IActionResult Logout()
         {
             HttpContext.Session.Remove("email");
             return RedirectToAction("Index", "Home");
         }
         // GET: Customers/Details/5
+        //[Authorize]
         public IActionResult Details(int? id)
         {
-            if (!Loggedin())
-                return RedirectToAction("Index", "Home");
-
             if (id == null || _context.Customer == null)
             {
                 return NotFound();
@@ -103,7 +90,7 @@ namespace WebApplication1.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Email,Password,Address,PhoneNumber")] Customer customer)
+        public async Task<IActionResult> Create([Bind("Id,Name,Email,Password,Address,PhoneNumber,IsAdmin")] Customer customer)
         {
             if (ModelState.IsValid)
             {
@@ -114,10 +101,9 @@ namespace WebApplication1.Controllers
             return View(customer);
         }
         // GET: Customers/Edit/5
+        //[Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (!Loggedin())
-                return RedirectToAction("Index", "Home");
             if (id == null || _context.Customer == null)
             {
                 return NotFound();
@@ -133,12 +119,11 @@ namespace WebApplication1.Controllers
         // POST: Customers/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        //[Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Email,Password,Address,PhoneNumber")] Customer customer)
         {
-            if (!Loggedin())
-                return RedirectToAction("Index", "Home");
             if (id != customer.Id)
             {
                 return NotFound();
@@ -167,10 +152,9 @@ namespace WebApplication1.Controllers
             return View(customer);
         }
         // GET: Customers/Delete/5
+        //[Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (!Loggedin())
-                return RedirectToAction("Index", "Home");
             if (id == null || _context.Customer == null)
             {
                 return NotFound();
@@ -199,22 +183,14 @@ namespace WebApplication1.Controllers
             {
                 _context.Customer.Remove(customer);
             }
-            
+
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-        public bool Loggedin()
-        {
-            string email = HttpContext.Session.GetString("email");
-            if (email != null)
-                return true;
-            return false;
-        }
+        //[Authorize]
         public Customer GetCustomerProfile()
         {
             // Retrieve the user's profile data from the database
-            if (!Loggedin())
-                return null;
             Customer customer = _context.Customer.FirstOrDefault(c => c.Email == HttpContext.Session.GetString("email"));
             Customer customerProfile = new Customer
             {
@@ -227,7 +203,7 @@ namespace WebApplication1.Controllers
         }
         private bool CustomerExists(int id)
         {
-          return _context.Customer.Any(e => e.Id == id);
+            return _context.Customer.Any(e => e.Id == id);
         }
     }
 }

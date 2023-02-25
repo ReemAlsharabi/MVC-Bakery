@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Build.Framework;
 using System.ComponentModel.DataAnnotations;
 using WebApplication1.Data;
@@ -23,7 +24,7 @@ namespace WebApplication1.Models
             return ValidationResult.Success;
         }
     }
-    public class Customer
+    public class Customer : IdentityUser
     {
         [System.ComponentModel.DataAnnotations.Key]
         public int Id { get; set; }
@@ -38,5 +39,13 @@ namespace WebApplication1.Models
         // create the admin account before initializing IsAdmin to false
         public bool IsAdmin { get; set; } = false;
         public List<Order> Orders { get; set; } = new List<Order>();
+        /*
+        public int ConcurrencyStamp = 0;
+        public int LockoutEnd = 0;
+        public string NormalizedEmail = " ";
+        public string NormalizedUserName = " ";
+        public string PasswordHash = " ";
+        public string UserName = " ";
+        */
     }
 }
